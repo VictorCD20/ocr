@@ -1,0 +1,6 @@
+# Ignorar archivos con llaves secretas y datos sensibles
+.env
+__pycache__/
+*.pyc
+node_modules/
+dist/

@@ -1,0 +1,58 @@
+{
+  "documento": {
+    "tipo": "ticket | factura_cfdi | comprobante | no_identificado",
+    "calidad_imagen": "buena | regular | mala",
+    "requiere_revision": true,
+    "motivos_revision": []
+  },
+  "datos_fiscales": {
+    "uuid": null,
+    "rfc_emisor": null,
+    "rfc_receptor": null,
+    "nombre_emisor": null,
+    "nombre_receptor": null,
+    "regimen_fiscal": null
+  },
+  "datos_operacion": {
+    "fecha": null,
+    "hora": null,
+    "folio": null,
+    "metodo_pago": null,
+    "forma_pago": null,
+    "moneda": "MXN"
+  },
+  "importes": {
+    "subtotal": null,
+    "iva": null,
+    "otros_impuestos": null,
+    "descuento": null,
+    "total": null
+  },
+  "conceptos": [
+    {
+      "descripcion": null,
+      "cantidad": null,
+      "precio_unitario": null,
+      "importe": null
+    }
+  ],
+  "qr": {
+    "detectado": false,
+    "url": null,
+    "uuid": null,
+    "rfc_emisor": null,
+    "rfc_receptor": null,
+    "total": null
+  },
+  "operacion_interna": {
+    "empleado_id": null,
+    "empleado_nombre": null,
+    "sucursal": null,
+    "categoria": "gasto | venta | insumo | nomina | otro",
+    "estado": "pendiente_revision"
+  },
+  "confianza": {
+    "global": 0,
+    "campos_baja_confianza": []
+  }
+}

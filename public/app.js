@@ -70,19 +70,20 @@ function triggerFileInput() {
   if (inputFile) inputFile.click();
 }
 
+let loadedPhotos = [];
+
 function handleFileSelect(event) {
   if (event.target.files && event.target.files.length > 0) {
-    // Si se seleccionan varias imágenes a la vez, procesamos la primera o combinadas
-    handleFile(event.target.files[0]);
+    const files = Array.from(event.target.files);
+    files.forEach(file => processFileToPhotoList(file));
   }
 }
 
-function handleFile(file) {
+function processFileToPhotoList(file) {
   if (!file.type.startsWith('image/')) {
     alert('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).');
     return;
   }
-  selectedFile = file;
 
   const reader = new FileReader();
   reader.onerror = () => {
@@ -98,7 +99,6 @@ function handleFile(file) {
       alert('Error al cargar la imagen seleccionada.');
     };
     img.onload = () => {
-      // Redimensionar para no sobrepasar el límite de 4.5MB de Vercel Serverless Payload
       const MAX_WIDTH = 1600;
       const MAX_HEIGHT = 1600;
       let width = img.width;
@@ -122,35 +122,77 @@ function handleFile(file) {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Comprimir a JPEG con calidad 0.82
       const resizedBase64 = canvas.toDataURL('image/jpeg', 0.82);
 
-      currentFotoBase64 = resizedBase64;
-      document.getElementById('image-preview').src = resizedBase64;
-      document.getElementById('preview-wrapper').style.display = 'flex';
-      document.getElementById('dropzone').style.display = 'none';
-      document.getElementById('btn-process-ocr').disabled = false;
-      document.getElementById('btn-clear').style.display = 'inline-flex';
-      document.getElementById('ocr-alert').style.display = 'none';
+      // Agregar a la lista de fotos acumuladas
+      loadedPhotos.push(resizedBase64);
+      currentFotoBase64 = loadedPhotos[0]; // La primera es la principal
+
+      renderPhotosPreview();
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
+function renderPhotosPreview() {
+  if (loadedPhotos.length === 0) {
+    clearUpload();
+    return;
+  }
+
+  const previewWrapper = document.getElementById('preview-wrapper');
+  const imagePreview = document.getElementById('image-preview');
+  const thumbsContainer = document.getElementById('thumbs-container');
+  const dropzone = document.getElementById('dropzone');
+  const btnProcess = document.getElementById('btn-process-ocr');
+  const actionGroup = document.getElementById('action-buttons-group');
+
+  // Imagen destacada (la seleccionada o última)
+  imagePreview.src = currentFotoBase64 || loadedPhotos[0];
+  previewWrapper.style.display = 'flex';
+  dropzone.style.display = 'none';
+  btnProcess.disabled = false;
+  if (actionGroup) actionGroup.style.display = 'flex';
+
+  // Renderizar miniaturas si hay más de 1 foto
+  thumbsContainer.innerHTML = '';
+  if (loadedPhotos.length > 1) {
+    loadedPhotos.forEach((photoB64, index) => {
+      const thumb = document.createElement('img');
+      thumb.src = photoB64;
+      thumb.style.width = '60px';
+      thumb.style.height = '60px';
+      thumb.style.objectFit = 'cover';
+      thumb.style.borderRadius = '6px';
+      thumb.style.border = (photoB64 === currentFotoBase64) ? '2px solid var(--primary-cyan)' : '1px solid var(--border-color)';
+      thumb.style.cursor = 'pointer';
+      thumb.onclick = () => {
+        currentFotoBase64 = photoB64;
+        renderPhotosPreview();
+      };
+      thumbsContainer.appendChild(thumb);
+    });
+  }
+}
+
 function clearUpload() {
   selectedFile = null;
   currentFotoBase64 = null;
+  loadedPhotos = [];
+
   const inCam = document.getElementById('input-camera');
   const inFile = document.getElementById('input-file');
   if (inCam) inCam.value = '';
   if (inFile) inFile.value = '';
   
   document.getElementById('image-preview').src = '';
+  document.getElementById('thumbs-container').innerHTML = '';
   document.getElementById('preview-wrapper').style.display = 'none';
   document.getElementById('dropzone').style.display = 'flex';
   document.getElementById('btn-process-ocr').disabled = true;
-  document.getElementById('btn-clear').style.display = 'none';
+  const actionGroup = document.getElementById('action-buttons-group');
+  if (actionGroup) actionGroup.style.display = 'none';
   document.getElementById('ocr-alert').style.display = 'none';
 }
 

@@ -71,7 +71,8 @@ function triggerFileInput() {
 }
 
 function handleFileSelect(event) {
-  if (event.target.files && event.target.files[0]) {
+  if (event.target.files && event.target.files.length > 0) {
+    // Si se seleccionan varias imágenes a la vez, procesamos la primera o combinadas
     handleFile(event.target.files[0]);
   }
 }

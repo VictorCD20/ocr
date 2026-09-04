@@ -42,13 +42,14 @@
             <span id="api-status" class="badge badge-aprobado" style="display:none;">API OK</span>
           </div>
 
-          <div id="dropzone" class="upload-dropzone" onclick="document.getElementById('file-input').click()">
+          <div id="dropzone" class="upload-dropzone" onclick="triggerCameraInput()">
             <div class="upload-icon">📷</div>
             <div>
-              <strong style="color: var(--text-primary);">Haz clic o arrastra la foto aquí</strong>
-              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">Tickets, facturas en JPG, PNG o WebP</p>
+              <strong style="color: var(--text-primary);">Tomar foto del comprobante</strong>
+              <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">Presiona para abrir la cámara o seleccionar de la galería</p>
             </div>
-            <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+            <!-- Input con atributo capture="environment" para abrir la cámara trasera en celular -->
+            <input type="file" id="file-input" accept="image/*" capture="environment" style="display: none;" onchange="handleFileSelect(event)">
           </div>
 
           <div id="preview-wrapper" class="preview-container" style="display: none;">
@@ -57,10 +58,10 @@
 
           <div style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
             <button id="btn-process-ocr" class="btn btn-primary btn-block" onclick="processOCR()" disabled>
-              <span>⚡ Procesar con OCR</span>
+              <span>⚡ Leer comprobante</span>
             </button>
             <button id="btn-clear" class="btn btn-secondary" onclick="clearUpload()" style="display: none;">
-              <span>🗑️ Cambiar</span>
+              <span>🗑️ Tomar otra foto</span>
             </button>
           </div>
 

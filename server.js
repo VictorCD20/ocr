@@ -78,9 +78,26 @@ app.post('/api/ocr', upload.single('imagen'), async (req, res) => {
       });
     }
 
-    if (!req.file) {
+    let imageBuffer = null;
+    let mimeType = 'image/jpeg';
+
+    if (req.file) {
+      imageBuffer = req.file.buffer;
+      mimeType = req.file.mimetype || 'image/jpeg';
+    } else if (req.body && req.body.imagen_base64) {
+      const base64Str = req.body.imagen_base64;
+      const matches = base64Str.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+      if (matches) {
+        mimeType = matches[1];
+        imageBuffer = Buffer.from(matches[2], 'base64');
+      } else {
+        imageBuffer = Buffer.from(base64Str.replace(/^data:image\/\w+;base64,/, ''), 'base64');
+      }
+    }
+
+    if (!imageBuffer) {
       return res.status(400).json({
-        error: 'No se ha adjuntado ninguna imagen para procesar.'
+        error: 'No se ha proporcionado ninguna imagen para procesar.'
       });
     }
 
@@ -123,8 +140,8 @@ Devuelve esta estructura:
     const imageParts = [
       {
         inlineData: {
-          data: req.file.buffer.toString('base64'),
-          mimeType: req.file.mimetype || 'image/jpeg'
+          data: imageBuffer.toString('base64'),
+          mimeType: mimeType
         }
       }
     ];
@@ -177,7 +194,7 @@ Devuelve esta estructura:
     }
 
     // Convertir foto a Base64 Data URL para guardarla localmente como preview
-    const fotoBase64 = `data:${req.file.mimetype || 'image/jpeg'};base64,${req.file.buffer.toString('base64')}`;
+    const fotoBase64 = `data:${mimeType};base64,${imageBuffer.toString('base64')}`;
 
     res.json({
       ocr: ocrData,

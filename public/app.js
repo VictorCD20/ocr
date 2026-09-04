@@ -60,6 +60,20 @@ async function checkHealth() {
   }
 }
 
+function triggerCameraInput() {
+  const fileInput = document.getElementById('file-input');
+  if (!fileInput) return;
+
+  try {
+    fileInput.click();
+  } catch (err) {
+    const ocrAlert = document.getElementById('ocr-alert');
+    ocrAlert.className = 'alert alert-error';
+    ocrAlert.textContent = '⚠️ Tu navegador o dispositivo bloqueó el acceso a la cámara. Revisa los permisos de la aplicación.';
+    ocrAlert.style.display = 'block';
+  }
+}
+
 function handleFileSelect(event) {
   if (event.target.files && event.target.files[0]) {
     handleFile(event.target.files[0]);
@@ -68,12 +82,19 @@ function handleFileSelect(event) {
 
 function handleFile(file) {
   if (!file.type.startsWith('image/')) {
-    alert('Por favor selecciona una imagen válida.');
+    alert('Por favor selecciona un archivo de imagen válido (JPG, PNG, WebP).');
     return;
   }
   selectedFile = file;
 
   const reader = new FileReader();
+  reader.onerror = () => {
+    const ocrAlert = document.getElementById('ocr-alert');
+    ocrAlert.className = 'alert alert-error';
+    ocrAlert.textContent = '❌ Ocurrió un error al leer el archivo de foto en el dispositivo.';
+    ocrAlert.style.display = 'block';
+  };
+
   reader.onload = (e) => {
     currentFotoBase64 = e.target.result;
     document.getElementById('image-preview').src = e.target.result;
@@ -81,6 +102,7 @@ function handleFile(file) {
     document.getElementById('dropzone').style.display = 'none';
     document.getElementById('btn-process-ocr').disabled = false;
     document.getElementById('btn-clear').style.display = 'inline-flex';
+    document.getElementById('ocr-alert').style.display = 'none';
   };
   reader.readAsDataURL(file);
 }
@@ -98,22 +120,28 @@ function clearUpload() {
 }
 
 async function processOCR() {
-  if (!selectedFile) return;
+  if (!currentFotoBase64) {
+    alert('Por favor toma una foto o selecciona una imagen primero.');
+    return;
+  }
 
   const btnProcess = document.getElementById('btn-process-ocr');
   const ocrAlert = document.getElementById('ocr-alert');
   ocrAlert.style.display = 'none';
 
   btnProcess.disabled = true;
-  btnProcess.innerHTML = `<div class="spinner"></div> <span>Analizando comprobante...</span>`;
-
-  const formData = new FormData();
-  formData.append('imagen', selectedFile);
+  btnProcess.innerHTML = `<div class="spinner"></div> <span>Leyendo comprobante...</span>`;
 
   try {
+    // Envío de la imagen en base64 a la ruta relativa /api/ocr
     const res = await fetch('/api/ocr', {
       method: 'POST',
-      body: formData
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        imagen_base64: currentFotoBase64
+      })
     });
 
     const data = await res.json();
@@ -131,7 +159,7 @@ async function processOCR() {
     ocrAlert.style.display = 'block';
   } finally {
     btnProcess.disabled = false;
-    btnProcess.innerHTML = `<span>⚡ Procesar con OCR</span>`;
+    btnProcess.innerHTML = `<span>⚡ Leer comprobante</span>`;
   }
 }
 

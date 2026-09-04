@@ -92,13 +92,47 @@ function handleFile(file) {
   };
 
   reader.onload = (e) => {
-    currentFotoBase64 = e.target.result;
-    document.getElementById('image-preview').src = e.target.result;
-    document.getElementById('preview-wrapper').style.display = 'flex';
-    document.getElementById('dropzone').style.display = 'none';
-    document.getElementById('btn-process-ocr').disabled = false;
-    document.getElementById('btn-clear').style.display = 'inline-flex';
-    document.getElementById('ocr-alert').style.display = 'none';
+    const img = new Image();
+    img.onerror = () => {
+      alert('Error al cargar la imagen seleccionada.');
+    };
+    img.onload = () => {
+      // Redimensionar para no sobrepasar el límite de 4.5MB de Vercel Serverless Payload
+      const MAX_WIDTH = 1600;
+      const MAX_HEIGHT = 1600;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height) {
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+      } else {
+        if (height > MAX_HEIGHT) {
+          width = Math.round((width * MAX_HEIGHT) / height);
+          height = MAX_HEIGHT;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Comprimir a JPEG con calidad 0.82
+      const resizedBase64 = canvas.toDataURL('image/jpeg', 0.82);
+
+      currentFotoBase64 = resizedBase64;
+      document.getElementById('image-preview').src = resizedBase64;
+      document.getElementById('preview-wrapper').style.display = 'flex';
+      document.getElementById('dropzone').style.display = 'none';
+      document.getElementById('btn-process-ocr').disabled = false;
+      document.getElementById('btn-clear').style.display = 'inline-flex';
+      document.getElementById('ocr-alert').style.display = 'none';
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }

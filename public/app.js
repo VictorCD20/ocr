@@ -61,17 +61,13 @@ async function checkHealth() {
 }
 
 function triggerCameraInput() {
-  const fileInput = document.getElementById('file-input');
-  if (!fileInput) return;
+  const inputCam = document.getElementById('input-camera');
+  if (inputCam) inputCam.click();
+}
 
-  try {
-    fileInput.click();
-  } catch (err) {
-    const ocrAlert = document.getElementById('ocr-alert');
-    ocrAlert.className = 'alert alert-error';
-    ocrAlert.textContent = '⚠️ Tu navegador o dispositivo bloqueó el acceso a la cámara. Revisa los permisos de la aplicación.';
-    ocrAlert.style.display = 'block';
-  }
+function triggerFileInput() {
+  const inputFile = document.getElementById('input-file');
+  if (inputFile) inputFile.click();
 }
 
 function handleFileSelect(event) {
@@ -110,7 +106,11 @@ function handleFile(file) {
 function clearUpload() {
   selectedFile = null;
   currentFotoBase64 = null;
-  document.getElementById('file-input').value = '';
+  const inCam = document.getElementById('input-camera');
+  const inFile = document.getElementById('input-file');
+  if (inCam) inCam.value = '';
+  if (inFile) inFile.value = '';
+  
   document.getElementById('image-preview').src = '';
   document.getElementById('preview-wrapper').style.display = 'none';
   document.getElementById('dropzone').style.display = 'flex';
@@ -133,7 +133,6 @@ async function processOCR() {
   btnProcess.innerHTML = `<div class="spinner"></div> <span>Leyendo comprobante...</span>`;
 
   try {
-    // Envío de la imagen en base64 a la ruta relativa /api/ocr
     const res = await fetch('/api/ocr', {
       method: 'POST',
       headers: {
@@ -144,7 +143,13 @@ async function processOCR() {
       })
     });
 
-    const data = await res.json();
+    const responseText = await res.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`Error en servidor Vercel: ${responseText.substring(0, 100)}...`);
+    }
 
     if (!res.ok) {
       throw new Error(data.error || 'Error al procesar la imagen.');

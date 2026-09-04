@@ -14,14 +14,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const DATA_FILE = path.join(__dirname, 'data', 'documents.json');
+// Detectar entorno serverless (Vercel)
+const IS_VERCEL = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+const DATA_DIR = IS_VERCEL ? '/tmp' : path.join(__dirname, 'data');
+const DATA_FILE = path.join(DATA_DIR, 'documents.json');
 
-// Asegurar carpeta data/
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
-  fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+// Asegurar carpeta data/ o /tmp
+if (!fs.existsSync(DATA_DIR)) {
+  try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch (e) {}
 }
 if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([]), 'utf-8');
+  try { fs.writeFileSync(DATA_FILE, JSON.stringify([]), 'utf-8'); } catch (e) {}
 }
 
 // Configurar multer para recibir archivos de imágenes en memoria
@@ -264,6 +267,10 @@ app.patch('/api/documents/:id', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor CODIA OCR ejecutándose en http://localhost:${PORT}`);
-});
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Servidor CODIA OCR ejecutándose en http://localhost:${PORT}`);
+  });
+}
+
+export default app;
